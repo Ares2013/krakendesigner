@@ -1,10 +1,10 @@
-<div class="box box-primary collapsed-box" ng-repeat="(endpoint_index,endpoint) in service.endpoints"
-     ng-class="isValidEndpoint(endpoint.endpoint) ? '' : 'box-danger'">
+<div class="box box-primary"
+    ng-repeat="(endpoint_index,endpoint) in service.endpoints"
+    ng-class="isValidEndpoint(endpoint.endpoint) ? '' : 'box-danger'"
+    id="e{{ endpoint_index }}">
     <div class="box-header with-border">
         <h3 class="box-title">
-            <a data-widget="collapse">
-                <i class="fa fa-plus"></i>
-
+            <a href="/#!/endpoints?target={{endpoint_index}}">
                 {{ endpoint.endpoint }}
                 <code class="small" ng-if="endpoint.querystring_params.length > 0">
                     ?<span ng-repeat="qs in endpoint.querystring_params">{{ qs }}=X{{ $last ? '' : '&' }}</span>
@@ -15,14 +15,14 @@
         <div class="box-tools pull-right">
             <span ng-hide="isValidEndpoint(endpoint.endpoint)" class="badge label-danger"><i class="fa fa-warning"></i> Error(s)</span>
             <span class="badge">{{ endpoint.output_encoding }}</span>
-            <span class="badge method_{{ endpoint.method }}">{{ endpoint.method }}</span>
+            <span class="method_header badge method_{{ endpoint.method.length ? endpoint.method : 'GET' }}">{{ endpoint.method.length ? endpoint.method : 'GET' }}</span>
             <button type="button" class="btn btn-box-tool"
                     ng-click="deleteEndpoint(endpoint_index, 'This endpoint and all the information will be deleted. Do you want to proceed?')">
                 <i class="fa fa-trash"></i></button>
         </div>
     </div>
     <!-- /.box-header -->
-    <div class="box-body">
+    <div class="box-body" id="endpoint-detail-{{endpoint_index}}" ng-if="selected_endpoint == endpoint_index && selected_endpoint.length">
         <!-- Search Endpoints
         <form action="#" method="get" class="sidebar-form">
             <input type="search" id="q" ng-model="q" name="q" class="form-control" placeholder="Filter Endpoints...">
@@ -56,9 +56,9 @@
                                class="form-control input-md"
                                required="" ng-model="endpoint.endpoint">
                             <div class="input-group-btn">
-                                <button type="button" class="btn btn-lg btn-primary" ng-disabled="!endpoint.backend.length" data-toggle="modal" data-target="#endpoint-run-modal-{{ endpoint_index }}">
+                                <a class="btn btn-lg btn-primary" ng-disabled="!endpoint.backend.length" href="/#!/client?target={{ endpoint_index }}">
                                     <i class="fa fa-gear"></i> Run
-                                </button>
+                                </a>
                             </div>
                         </div>
                         <span class="help-block">This is the URI your clients will connect to. Must start with slash.
@@ -241,9 +241,6 @@
                             <div class="box-header with-border">
                                 <h3 class="box-title">Static Response</h3>
                                 <div class="box-tools pull-right">
-                                    <button type="button" class="btn btn-box-tool" data-widget="collapse">
-                                        <i class="fa fa-minus"></i>
-                                    </button>
                                     <button type="button" class="btn btn-box-tool" ng-click="deleteStaticResponse(endpoint_index)">
                                         <i class="fa fa-trash"></i>
                                     </button>
@@ -298,7 +295,7 @@
                                 <div class="form-group">
                                     <div class="col-md-12">
                                         <label>Service Discovery</label>
-                                        <span class="help-block">Service Discovery options you have configured. <a href="/#/service-discovery">(add more)</a></span>
+                                        <span class="help-block">Service Discovery options you have configured. <a href="/#!/service-discovery">(add more)</a></span>
                                          <div class="radio" ng-repeat="sd in sd_providers.providers" ng-init="backend.sd=sd_providers.providers[0]">
                                             <label>
                                               <input type="radio" ng-model="backend.sd" value="{{ sd }}">
@@ -574,11 +571,11 @@
                                     <div class="col-md-10">
                                         <div class="form-group">
                                             <div class="col-xs-12">
-                                               <textarea json-formatter class="form-control" ng-model="backend.extra_config['github.com/devopsfaith/krakend-martian']"></textarea>
+                                               <textarea json-formatter syntax="syntax_validation_martian[backend_index]" class="form-control" ng-model="backend.extra_config['github.com/devopsfaith/krakend-martian']"></textarea>
                                             </div>
                                         </div>
-                                        <p ng-show="backend.martian_syntax_validation.length" class="badge label-danger">
-                                            <i class="fa fa-warning"></i> Syntax error - {{backend.martian_syntax_validation}}</p>
+                                        <p ng-show="syntax_validation_martian[backend_index].length" class="badge label-danger">
+                                            <i class="fa fa-warning"></i> Syntax error - {{syntax_validation_martian[backend_index]}}</p>
                                         <span class="help-block">Paste here your JSON configuration to be used in the martian modifier. See <a href="https://github.com/devopsfaith/krakend-martian/blob/master/example/krakend.json#L26">an example</a></span>
                                     </div>
                                 </div>
@@ -785,70 +782,6 @@
             </div>
         </div>
     </div>
-     <!-- Modal Window to run the endpoint-->
-     <div id="endpoint-run-modal-{{ endpoint_index }}" class="modal fade"
-     tabindex="-1"
-     role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">Run endpoint <code>{{ endpoint.endpoint }}</code></h4>
-            </div>
-            <div class="modal-body">
-                <p>All the settings below are defined in the <strong>Service configuration</strong>,
-                    setting one or several values here means overriding the settings for this specific endpoint
-                    only.</p>
-
-                <div class="row">
-                    <div class="form-group">
-                        <div class="col-md-12">
-                            <label>Parameters</label>
-                            <textarea rows="1"  class="form-control" ng-model="run[endpoint_index].input.parameters" ng-init="run[endpoint_index].input.parameters='{}'"></textarea>
-                            <span class="help-block">Pass the values of endpoint <code>{parameters}</code> as a JSON object key pair, like <code>{"string":"string"}</code></span>
-                        </div>
-                        <div class="col-md-12">
-                            <label>Body</label>
-                            <textarea rows="1" class="form-control" ng-model="run[endpoint_index].input.body" ng-init="run[endpoint_index].input.body=''"></textarea>
-                            <span class="help-block">Optional. Body to send to the backends</span>
-                        </div>
-                        <div class="col-md-12">
-                                <label>Headers</label>
-                                <textarea rows="1" class="form-control" ng-model="run[endpoint_index].input.headers" ng-init="run[endpoint_index].input.headers='{}'"></textarea>
-                                <span class="help-block">Optional. Pass headers inside a JSON object with array maps, e.g: <code>{"My-header": ["Value 1", "Value 2"] }</code></span>
-                            </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="form-group">
-                        <div class="col-md-12">
-                            <button ng-click="runEndpoint(endpoint_index)" class="btn btn-primary">
-                                <i class="fa fa-gear"></i> Run
-                            </button>
-                        </div>
-                        <div class="col-md-12" ng-if="run[endpoint_index].output.body">
-                            <h4>Proxy response <span class="label label-info ng-binding" title="Status Code">Status {{ run[endpoint_index].output.statusCode }}</span> <span ng-if="0 == run[endpoint_index].output.statusCode">Good!</span></span></h4>
-                            <p>Is complete? <code>{{ run[endpoint_index].output.isComplete }}</code> </p>
-                            <div class="response">
-                                <p>Headers:</p>
-                                <pre>{{ run[endpoint_index].output.headers }}</pre>
-                                <p>Body:</p>
-                                <div class="body">
-                                    <pre>{{ run[endpoint_index].output.body }}</pre>
-                                </div>
-                            </div>
-                            <button class="btn btn-default" ng-click="run[endpoint_index].output = {}">
-                                <i class="fa fa-trash"></i> Clean
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</div>
 </div>
 
 
