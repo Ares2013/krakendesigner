@@ -34,14 +34,42 @@ angular
                     "level": "ERROR",
                     "prefix": "[KRAKEND]",
                     "syslog": false,
-                    "stdout": true
+                    "stdout": true,
+                    "format": "default"
                 },
                 'github_com/devopsfaith/krakend-cors': {
+                    "allow_origins": [
+                        "*"
+                      ],
+                    "expose_headers": [
+                        "Content-Length"
+                    ],
+                    "max_age": "12h",
                     "allow_methods": [
                         "GET",
                         "HEAD",
                         "POST"
                     ]
+                },
+                "github.com/devopsfaith/krakend-amqp/produce": {
+                    "exchange":       "some-exchange",
+                    "durable":        true,
+                    "delete":         false,
+                    "exclusive":      false,
+                    "no_wait":        true,
+                    "mandatory": true,
+                    "immediate": false
+                },
+                "github.com/devopsfaith/krakend-amqp/consume": {
+                    "name":           "queue-1",
+                    "exchange":       "some-exchange",
+                    "durable":        true,
+                    "delete":         false,
+                    "exclusive":      false,
+                    "no_wait":        true,
+                    "no_local":       false,
+                    "routing_key":    ["#"],
+                    "prefetch_count": 10
                 },
                 // // Endpoint level middleware (github.com)
                 'github.com/devopsfaith/krakend-ratelimit/juju/router': {
